@@ -1,0 +1,126 @@
+services:
+  wsgi:
+    container_name: choturvuz_api
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - ../.env
+    environment:
+      APP_ENV: dev
+      DJANGO_RUN_MIGRATIONS: "1"
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ..:/app
+    ports:
+      - "${WSGI_PORT:-8012}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - choturvuz-dev
+
+  celery-worker:
+    container_name: choturvuzx_celery
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: celery -A app worker -l info
+    env_file:
+      - ../.env
+    environment:
+      APP_ENV: dev
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      DJANGO_CREATE_SUPERUSER: "0"
+      DJANGO_SEED_DEMO: "0"
+      DJANGO_WAIT_FOR_MIGRATIONS: "1"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ..:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - choturvuz-dev
+
+  celery-beat:
+    container_name: choturvuzx_celery_beat
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: celery -A app beat -l info
+    env_file:
+      - ../.env
+    environment:
+      APP_ENV: dev
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      DJANGO_CREATE_SUPERUSER: "0"
+      DJANGO_SEED_DEMO: "0"
+      DJANGO_WAIT_FOR_MIGRATIONS: "1"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ..:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - choturvuz-dev
+
+  postgres:
+    container_name: choturvuzx_psql
+    image: postgres:16-alpine
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_DB: ${DB_NAME:-choturvuz_db}
+      POSTGRES_USER: ${DB_USER:-choturvuz}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-choturvuz}
+    volumes:
+      - choturvuz_psql_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_FORWARD_PORT:-5445}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-choturvuz} -d ${DB_NAME:-choturvuz_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      choturvuz-dev:
+        aliases:
+          - postgres
+
+  redis:
+    container_name: choturvuzx_redis
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_FORWARD_PORT:-6392}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      choturvuz-dev:
+        aliases:
+          - redis
+
+volumes:
+  choturvuz_psql_data:
+
+networks:
+  choturvuz-dev:
+    driver: bridge

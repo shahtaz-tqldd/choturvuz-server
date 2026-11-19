@@ -1,0 +1,996 @@
+{
+  "info": {
+    "name": "Choturvuz Fashion E-commerce API",
+    "description": "REST API for the Choturvuz fashion storefront.\n\n**Base URL:** `{{base_url}}` (default `http://localhost:8000`)\n\n**Response envelope** — every endpoint returns:\n\n```json\n{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"...\",\n  \"data\": { },\n  \"meta\": { }\n}\n```\n\nErrors use `success: false` plus an `errors` object.\n\n**Auth** — Admin endpoints require a staff JWT: log in via `Admin · Auth / Admin Login` (the token is captured automatically into `{{admin_token}}`). Customer account endpoints use `{{user_token}}`. Ordering and tracking need **no auth** — email or phone identifies the guest customer.\n\n**Money** — all amounts are in BDT (`Decimal(12,2)`).\n\n**Order lifecycle** — `PENDING_PAYMENT → CONFIRMED → PROCESSING → SHIPPED → DELIVERED`, with `CANCELLED` reachable from any active state (restores stock, flags refunds). Illegal jumps are rejected.\n\n**Payment plans** — `FULL` charges the whole total via bKash; `HALF` charges a 50% advance and the rest is due on delivery (recorded by an admin). Configure bKash via the `BKASH_*` env vars before initiating payments.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "admin_token", "value": "" },
+    { "key": "user_token", "value": "" },
+    { "key": "order_number", "value": "ARS-261103-8FJ2QA" },
+    { "key": "order_id", "value": "" },
+    { "key": "product_id", "value": "" },
+    { "key": "variant_id", "value": "" },
+    { "key": "collection_id", "value": "" },
+    { "key": "customer_email", "value": "nusrat@example.com" },
+    { "key": "customer_phone", "value": "+8801711223344" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{user_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Client · Catalog",
+      "description": "Public storefront endpoints. No authentication required.",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/catalog/products/?search=&collection=&gender=&featured=&on_sale=&ordering=-created_at&page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "catalog", "products", ""],
+              "query": [
+                { "key": "search", "description": "Matches name, description, fabric." },
+                { "key": "collection", "description": "Collection slug (e.g. `summer-edit`) or exact name." },
+                { "key": "gender", "description": "One of `MEN`, `WOMEN`, `UNISEX`, `KIDS`." },
+                { "key": "featured", "description": "`true`/`1` for featured products only." },
+                { "key": "on_sale", "description": "`true`/`1` for products with a sale price." },
+                { "key": "ordering", "description": "`created_at`, `-created_at`, `base_price`, `-base_price`, `name`, `-name`." },
+                { "key": "page", "description": "Page number (default 1)." },
+                { "key": "page_size", "description": "Items per page, 1–100 (default 20)." }
+              ]
+            },
+            "description": "Paginated product grid for the storefront. Only `ACTIVE` products are returned."
+          },
+          "response": [
+            {
+              "name": "List Products",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/catalog/products/",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "catalog", "products", ""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"Products fetched successfully.\",\n  \"data\": [\n    {\n      \"id\": \"3f0c6b7e-1d2a-4c8f-9e55-a1b2c3d4e5f6\",\n      \"name\": \"Silk Saree\",\n      \"slug\": \"silk-saree\",\n      \"gender\": \"WOMEN\",\n      \"fabric\": \"Pure mulberry silk\",\n      \"status\": \"ACTIVE\",\n      \"base_price\": \"8500.00\",\n      \"sale_price\": \"7200.00\",\n      \"effective_price\": \"7200.00\",\n      \"discount_percent\": 15,\n      \"is_featured\": true,\n      \"primary_image\": \"https://cdn.example.com/images/products/silk-saree-1.webp\",\n      \"collections\": [\"eid-drop\"],\n      \"created_at\": \"2026-11-03T10:12:00Z\"\n    }\n  ],\n  \"meta\": {\n    \"count\": 1,\n    \"page\": 1,\n    \"page_size\": 20,\n    \"num_pages\": 1,\n    \"next\": null,\n    \"previous\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Product Detail",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/catalog/products/:slug_or_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "catalog", "products", ":slug_or_id", ""],
+              "variable": [
+                { "key": "slug_or_id", "value": "silk-saree", "description": "Product slug or UUID." }
+              ]
+            },
+            "description": "Full product payload: description, care instructions, images (ordered), and active variants with per-variant pricing and stock flags."
+          }
+        },
+        {
+          "name": "List Collections",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/catalog/collections/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "catalog", "collections", ""]
+            },
+            "description": "All active collections with their product counts."
+          }
+        },
+        {
+          "name": "Collection Detail",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/catalog/collections/:slug/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "catalog", "collections", ":slug", ""],
+              "variable": [
+                { "key": "slug", "value": "eid-drop", "description": "Collection slug or exact name." }
+              ]
+            },
+            "description": "A single collection plus its active products (card payloads)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Client · Orders & Payments",
+      "description": "Guest checkout and tracking. No authentication required — the customer's email or phone is the identifier.",
+      "item": [
+        {
+          "name": "Place Order",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_name\": \"Nusrat Jahan\",\n  \"customer_email\": \"{{customer_email}}\",\n  \"customer_phone\": \"{{customer_phone}}\",\n  \"address_line\": \"House 12, Road 5, Dhanmondi\",\n  \"city\": \"Dhaka\",\n  \"postal_code\": \"1209\",\n  \"notes\": \"Call before delivery.\",\n  \"payment_plan\": \"FULL\",\n  \"items\": [\n    { \"variant_id\": \"{{variant_id}}\", \"quantity\": 2 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", ""]
+            },
+            "description": "Place an order as a guest.\n\n- At least one of `customer_email` / `customer_phone` is required.\n- `payment_plan`: `FULL` or `HALF` (50% advance, rest on delivery; can be disabled in store config).\n- `items[].variant_id` comes from a product detail's `variants[].id`. Quantities are capped at 20 per line.\n- Prices and the delivery fee (inside vs outside Dhaka) are computed server-side; the order starts as `PENDING_PAYMENT`.\n- Returns **409** when stock runs short."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.order_number) {",
+                  "  pm.collectionVariables.set('order_number', body.data.order_number);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Place Order",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/api/v1/orders/", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ""] }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"status\": 201,\n  \"success\": true,\n  \"message\": \"Order placed successfully. Complete the payment to confirm it.\",\n  \"data\": {\n    \"id\": \"8d1f2a34-5678-4bcd-90ef-112233445566\",\n    \"order_number\": \"ARS-261103-8FJ2QA\",\n    \"status\": \"PENDING_PAYMENT\",\n    \"status_display\": \"Pending Payment\",\n    \"payment_status\": \"UNPAID\",\n    \"payment_status_display\": \"Unpaid\",\n    \"payment_plan\": \"FULL\",\n    \"customer_name\": \"Nusrat Jahan\",\n    \"customer_email\": \"nusrat@example.com\",\n    \"customer_phone\": \"+8801711223344\",\n    \"address_line\": \"House 12, Road 5, Dhanmondi\",\n    \"city\": \"Dhaka\",\n    \"postal_code\": \"1209\",\n    \"notes\": \"Call before delivery.\",\n    \"subtotal\": \"3600.00\",\n    \"delivery_fee\": \"70.00\",\n    \"total\": \"3670.00\",\n    \"paid_amount\": \"0.00\",\n    \"due_amount\": \"3670.00\",\n    \"advance_amount\": \"1835.00\",\n    \"items\": [\n      {\n        \"id\": \"1a2b3c4d-0000-4bcd-90ef-112233445566\",\n        \"product_id\": \"3f0c6b7e-1d2a-4c8f-9e55-a1b2c3d4e5f6\",\n        \"variant_id\": \"9e8d7c6b-5a4f-4bcd-90ef-112233445566\",\n        \"product_name\": \"Linen Shirt\",\n        \"variant_name\": \"White / M\",\n        \"sku\": \"SKU-3F0C6B7E-M-WHT\",\n        \"unit_price\": \"1800.00\",\n        \"quantity\": 2,\n        \"line_total\": \"3600.00\"\n      }\n    ],\n    \"events\": [\n      { \"id\": \"...\", \"status\": \"PENDING_PAYMENT\", \"note\": \"Order placed. Awaiting payment.\", \"created_by\": null, \"created_at\": \"2026-11-03T10:15:00Z\" }\n    ],\n    \"payments\": [],\n    \"delivered_at\": null,\n    \"cancelled_reason\": \"\",\n    \"created_at\": \"2026-11-03T10:15:00Z\",\n    \"updated_at\": \"2026-11-03T10:15:00Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Track Order",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/track/?order_number={{order_number}}&email={{customer_email}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", "track", ""],
+              "query": [
+                { "key": "order_number", "value": "{{order_number}}", "description": "Required. The order number returned at checkout." },
+                { "key": "email", "value": "{{customer_email}}", "description": "Email used at checkout. Required unless `phone` is given." },
+                { "key": "phone", "value": "+8801711223344", "description": "Phone used at checkout (alternative to email).", "disabled": true }
+              ]
+            },
+            "description": "Track an order with its order number plus the email **or** phone used when placing it. Returns the order with items, the full status timeline (`events`), and payment history. Mismatched identifiers return 404 (no data leak)."
+          },
+          "response": [
+            {
+              "name": "Track Order",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/orders/track/?order_number={{order_number}}&email={{customer_email}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "orders", "track", ""],
+                  "query": [
+                    { "key": "order_number", "value": "{{order_number}}" },
+                    { "key": "email", "value": "{{customer_email}}" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"Order fetched successfully.\",\n  \"data\": {\n    \"order_number\": \"ARS-261103-8FJ2QA\",\n    \"status\": \"CONFIRMED\",\n    \"payment_status\": \"PARTIALLY_PAID\",\n    \"payment_plan\": \"HALF\",\n    \"total\": \"3670.00\",\n    \"paid_amount\": \"1835.00\",\n    \"due_amount\": \"1835.00\",\n    \"events\": [\n      { \"status\": \"PENDING_PAYMENT\", \"note\": \"Order placed. Awaiting payment.\", \"created_at\": \"2026-11-03T10:15:00Z\" },\n      { \"status\": \"CONFIRMED\", \"note\": \"bKash payment received (1835.00 BDT, plan Half Advance).\", \"created_at\": \"2026-11-03T10:17:30Z\" }\n    ],\n    \"payments\": [\n      { \"method\": \"BKASH\", \"amount\": \"1835.00\", \"status\": \"COMPLETED\", \"bkash_trx_id\": \"TRX-999\", \"created_at\": \"2026-11-03T10:17:30Z\" }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Start bKash Payment",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/:order_number/pay/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", ":order_number", "pay", ""],
+              "variable": [
+                { "key": "order_number", "value": "{{order_number}}", "description": "The order number to pay for." }
+              ]
+            },
+            "description": "Creates a bKash tokenized-checkout session for the amount due under the order's plan (`FULL` → total, `HALF` → 50% advance). Redirect the customer's browser to `data.payment_url`; bKash then returns them to the configured callback which captures the money and confirms the order automatically.\n\nRequires the `BKASH_*` environment variables; returns a clear error otherwise. Only `PENDING_PAYMENT` orders can be paid."
+          },
+          "response": [
+            {
+              "name": "Start bKash Payment",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/orders/{{order_number}}/pay/",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "orders", "{{order_number}}", "pay", ""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"Payment initiated. Redirect the customer to payment_url.\",\n  \"data\": {\n    \"payment_id\": \"7c9f4e2a-1111-4bcd-90ef-112233445566\",\n    \"bkash_payment_id\": \"PM-123\",\n    \"amount\": \"3670.00\",\n    \"payment_url\": \"https://tokenized.sandbox.bka.sh/v1.2.0-beta/checkout?paymentID=PM-123\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "bKash Callback",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/bkash/callback/?paymentID=PM-123&status=success",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "payments", "bkash", "callback", ""],
+              "query": [
+                { "key": "paymentID", "value": "PM-123", "description": "bKash payment ID from the create response." },
+                { "key": "status", "value": "success", "description": "`success`, `failure`, or `cancel` — sent by bKash." }
+              ]
+            },
+            "description": "The bKash redirect target (configured via `BKASH_CALLBACK_URL`). You normally never call this by hand: bKash sends the customer's browser here, the API executes/captures the payment (or marks it failed/cancelled), then issues a **302 redirect** to `{USER_FRONTEND_URL}/orders/track?order_number=...&payment=success|failed|cancelled`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Client · Accounts",
+      "description": "Optional customer accounts (customers can order without one). Register → OTP → login.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nusrat@example.com\",\n  \"name\": \"Nusrat Jahan\",\n  \"phone\": \"+8801711223344\",\n  \"password\": \"StrongPass123!\",\n  \"confirm_password\": \"StrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/register/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "register", ""] },
+            "description": "Creates a password account and emails a 4-digit verification OTP."
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nusrat@example.com\",\n  \"otp\": \"1234\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/verify-otp/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "verify-otp", ""] },
+            "description": "Verifies the registration OTP and returns `access_token` / `refresh_token`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.access_token) {",
+                  "  pm.collectionVariables.set('user_token', body.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nusrat@example.com\",\n  \"password\": \"StrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/login/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "login", ""] },
+            "description": "Logs in with email + password. Returns `access_token` / `refresh_token`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.access_token) {",
+                  "  pm.collectionVariables.set('user_token', body.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firebase_id_token\": \"<firebase-id-token>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/google/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "google", ""] },
+            "description": "Creates or logs in an account from a Firebase Google identity. Requires Firebase credentials when `FIREBASE_VERIFY_ID_TOKEN=True`."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"<refresh_token>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/refresh/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "refresh", ""] },
+            "description": "Exchanges a refresh token for a new access token (old one is blacklisted)."
+          }
+        },
+        {
+          "name": "Request Password Reset",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"nusrat@example.com\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/request-reset-password/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "request-reset-password", ""] },
+            "description": "Sends a reset link when an eligible account exists. Always responds 200 (no account enumeration)."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uid\": \"<uid-from-email>\",\n  \"token\": \"<token-from-email>\",\n  \"new_password\": \"NewStrongPass123!\",\n  \"confirm_password\": \"NewStrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/reset-password/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "reset-password", ""] }
+          }
+        },
+        {
+          "name": "My Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/accounts/profile/details/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "profile", "details", ""] },
+            "description": "The authenticated customer's account + profile. Uses the collection-level bearer `{{user_token}}`."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nusrat J.\",\n  \"phone\": \"+8801711223344\",\n  \"city\": \"Dhaka\",\n  \"country\": \"Bangladesh\",\n  \"timezone\": \"Asia/Dhaka\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/profile/update/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "profile", "update", ""] },
+            "description": "Partial update; also accepts multipart `profile_picture` (image) and `clear_profile_picture` (bool)."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"StrongPass123!\",\n  \"new_password\": \"NewStrongPass123!\",\n  \"confirm_password\": \"NewStrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/settings/change-password/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "settings", "change-password", ""] }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/accounts/settings/delete-account/", "host": ["{{base_url}}"], "path": ["api", "v1", "accounts", "settings", "delete-account", ""] },
+            "description": "Soft-deletes the account; permanently removed after the retention window by the daily maintenance task."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Client · Store Config & Files",
+      "description": "Public store configuration and the R2-backed file API used for product images.",
+      "item": [
+        {
+          "name": "Get Store Config",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/base/?branding&commerce&seo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "base", ""],
+              "query": [
+                { "key": "branding", "description": "Include the branding section (flag-style param).", "value": null },
+                { "key": "legal_document", "description": "Policies section; combine with `document_type`.", "value": null, "disabled": true },
+                { "key": "document_type", "description": "`privacy_policy`, `terms_of_service`, `return_policy`, `data_deletion_policy`.", "value": null, "disabled": true },
+                { "key": "feature", "value": null, "description": "Maintenance-mode flag.", "disabled": true },
+                { "key": "announcement", "value": null, "description": "Banner settings.", "disabled": true },
+                { "key": "commerce", "description": "Currency + delivery fees + half-payment toggle.", "value": null },
+                { "key": "seo", "value": null, "disabled": true }
+              ]
+            },
+            "description": "Store-wide configuration. Without flags, every section is returned. The storefront needs `commerce` for fees and the half-payment toggle."
+          }
+        },
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "Image or file to upload (≤ `BASE_FILE_MAX_SIZE_MB`)." }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/v1/base/file/upload/", "host": ["{{base_url}}"], "path": ["api", "v1", "base", "file", "upload", ""] },
+            "description": "Uploads to R2 and returns `file_url` + `key`. Use the returned `file_url` when creating product images in the admin API."
+          }
+        },
+        {
+          "name": "Retrieve File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/base/file/?key=images/products/photo.webp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "base", "file", ""],
+              "query": [
+                { "key": "key", "value": "images/products/photo.webp", "description": "Storage key OR `url` — exactly one." },
+                { "key": "url", "value": "", "disabled": true },
+                { "key": "download", "value": "true", "disabled": true, "description": "Force a download disposition." },
+                { "key": "file_name", "value": "", "disabled": true, "description": "Filename for downloads." }
+              ]
+            },
+            "description": "Returns a short-lived presigned URL. Requires authentication."
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"images/products/photo.webp\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/v1/base/file/delete/", "host": ["{{base_url}}"], "path": ["api", "v1", "base", "file", "delete", ""] },
+            "description": "Deletes a stored file by `key` or `url`. Requires authentication."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Auth",
+      "description": "Staff authentication and account management. All sub-folders inherit the admin bearer token.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@choturvuz.store\",\n  \"password\": \"admin123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/accounts/login/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "accounts", "login", ""] },
+            "description": "Logs in a staff (`is_staff`) account. The response token is captured into `{{admin_token}}` automatically."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.access_token) {",
+                  "  pm.collectionVariables.set('admin_token', body.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Admin Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/api/v1/admin/accounts/login/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "accounts", "login", ""] }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"Admin logged in.\",\n  \"data\": {\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIs...\",\n    \"refresh_token\": \"eyJhbGciOiJIUzI1NiIs...\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Admin Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/accounts/me/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "accounts", "me", ""] }
+          }
+        },
+        {
+          "name": "Update Admin Info",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Choturvuz Admin", "type": "text" },
+                { "key": "avatar", "type": "file", "src": [], "description": "Optional avatar image." }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/accounts/update-info/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "accounts", "update-info", ""] }
+          }
+        },
+        {
+          "name": "Update Admin Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"admin123\",\n  \"new_password\": \"NewAdminPass123!\",\n  \"confirm_new_password\": \"NewAdminPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/accounts/update-password/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "accounts", "update-password", ""] }
+          }
+        },
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/accounts/account-list/?search=&status=ACTIVE&is_email_verified=true&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "accounts", "account-list", ""],
+              "query": [
+                { "key": "search", "value": "", "description": "Email, name, phone, city, or country." },
+                { "key": "status", "value": "ACTIVE", "description": "`ACTIVE`, `SUSPENDED`, `DEACTIVATED`, or `PREMIUM`; repeatable." },
+                { "key": "is_email_verified", "value": "true" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Non-admin accounts, paginated. Requires superuser."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Catalog",
+      "description": "Product, variant, image, and collection management.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/products/?search=&status=ACTIVE&gender=WOMEN&collection=eid-drop&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "products", ""],
+              "query": [
+                { "key": "search", "value": "", "description": "Name or slug." },
+                { "key": "status", "value": "ACTIVE", "description": "`DRAFT`, `ACTIVE`, or `ARCHIVED`." },
+                { "key": "gender", "value": "WOMEN", "description": "`MEN`, `WOMEN`, `UNISEX`, or `KIDS`." },
+                { "key": "collection", "value": "eid-drop", "description": "Collection slug or exact name." },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "All products in any status, with nested variants, images, and collections."
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Silk Saree\",\n  \"description\": \"Handwoven pure silk saree with golden zari border.\",\n  \"fabric\": \"Pure mulberry silk\",\n  \"care_instructions\": \"Dry clean only.\",\n  \"gender\": \"WOMEN\",\n  \"status\": \"ACTIVE\",\n  \"base_price\": \"8500.00\",\n  \"sale_price\": \"7200.00\",\n  \"is_featured\": true,\n  \"collection_ids\": [\"{{collection_id}}\"],\n  \"images\": [\n    { \"image_url\": \"https://cdn.example.com/images/products/saree-1.webp\", \"alt_text\": \"Front view\", \"position\": 0 },\n    { \"image_url\": \"https://cdn.example.com/images/products/saree-2.webp\", \"alt_text\": \"Detail\", \"position\": 1 }\n  ],\n  \"variants\": [\n    { \"size\": \"ONE_SIZE\", \"color_name\": \"Maroon\", \"color_hex\": \"#800000\", \"sku\": \"SAREE-MRN\", \"stock\": 5, \"is_active\": true },\n    { \"size\": \"ONE_SIZE\", \"color_name\": \"Navy\", \"color_hex\": \"#000080\", \"sku\": \"SAREE-NVY\", \"stock\": 3, \"price\": \"8800.00\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/catalog/products/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "catalog", "products", ""] },
+            "description": "Creates a product with nested images and variants in one call.\n\n- `slug` is derived from the name.\n- `sale_price` must be ≤ `base_price`.\n- Variant `size` ∈ `XS, S, M, L, XL, XXL, ONE_SIZE`; `sku` is globally unique; `price` (optional) overrides the product price.\n- `images[]` URLs usually come from `Client · Store Config & Files / Upload File`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data) {",
+                  "  pm.collectionVariables.set('product_id', body.data.id);",
+                  "  if (body.data.variants && body.data.variants.length) {",
+                  "    pm.collectionVariables.set('variant_id', body.data.variants[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/products/:product_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "products", ":product_id", ""],
+              "variable": [{ "key": "product_id", "value": "{{product_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sale_price\": \"6900.00\",\n  \"collection_ids\": [\"{{collection_id}}\"],\n  \"variants\": [\n    { \"id\": \"<existing-variant-id>\", \"stock\": 12 },\n    { \"size\": \"ONE_SIZE\", \"color_name\": \"Emerald\", \"sku\": \"SAREE-EMR\", \"stock\": 2 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/products/:product_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "products", ":product_id", ""],
+              "variable": [{ "key": "product_id", "value": "{{product_id}}" }]
+            },
+            "description": "Partial update. Sending `variants` performs an upsert: entries with `id` are updated, without `id` are created, and existing variants omitted from the list are deleted. `images` and `collection_ids` follow replace semantics when provided."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/products/:product_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "products", ":product_id", ""],
+              "variable": [{ "key": "product_id", "value": "{{product_id}}" }]
+            },
+            "description": "Hard-deletes the product and its variants/images. Historical order lines keep their name/price snapshots."
+          }
+        },
+        {
+          "name": "List Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/collections/?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "collections", ""],
+              "query": [{ "key": "page", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Create Collection",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Eid Drop\",\n  \"description\": \"Limited festive collection.\",\n  \"image_url\": \"https://cdn.example.com/images/collections/eid.webp\",\n  \"is_active\": true,\n  \"product_ids\": [\"{{product_id}}\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/catalog/collections/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "catalog", "collections", ""] },
+            "description": "Creates a collection, optionally seeding it with products via `product_ids`. Removing/deleting a collection never deletes its products."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) {",
+                  "  pm.collectionVariables.set('collection_id', body.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Collection Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/collections/:collection_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "collections", ":collection_id", ""],
+              "variable": [{ "key": "collection_id", "value": "{{collection_id}}" }]
+            },
+            "description": "Collection details; the response includes the assigned `product_ids`."
+          }
+        },
+        {
+          "name": "Update Collection",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated description.\",\n  \"is_active\": false\n}", "options": { "raw": { "language": "json" } } },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/collections/:collection_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "collections", ":collection_id", ""],
+              "variable": [{ "key": "collection_id", "value": "{{collection_id}}" }]
+            },
+            "description": "Partial update; pass `product_ids` to replace the product membership."
+          }
+        },
+        {
+          "name": "Delete Collection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/collections/:collection_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "collections", ":collection_id", ""],
+              "variable": [{ "key": "collection_id", "value": "{{collection_id}}" }]
+            },
+            "description": "Deletes only the collection (and its product memberships). Products are never removed."
+          }
+        },
+        {
+          "name": "Assign Collection Products",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"add\",\n  \"product_ids\": [\"{{product_id}}\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/catalog/collections/:collection_id/products/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "catalog", "collections", ":collection_id", "products", ""],
+              "variable": [{ "key": "collection_id", "value": "{{collection_id}}" }]
+            },
+            "description": "Assigns or removes products in bulk. `action` ∈ `add` (append), `remove`, or `set` (replace membership). Responds with the updated `product_ids` list."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Orders & Payments",
+      "description": "Order operations: view, lifecycle transitions, and offline payment recording.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/orders/?search=&status=CONFIRMED&payment_status=PARTIALLY_PAID&payment_plan=HALF&date_from=2026-11-01&date_to=2026-11-30&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "orders", ""],
+              "query": [
+                { "key": "search", "value": "", "description": "Order number, customer name, email, or phone." },
+                { "key": "status", "value": "CONFIRMED", "description": "`PENDING_PAYMENT`, `CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`." },
+                { "key": "payment_status", "value": "PARTIALLY_PAID", "description": "`UNPAID`, `PARTIALLY_PAID`, `PAID`, `REFUNDED`." },
+                { "key": "payment_plan", "value": "HALF", "description": "`FULL` or `HALF`." },
+                { "key": "date_from", "value": "2026-11-01", "description": "Created on/after (YYYY-MM-DD)." },
+                { "key": "date_to", "value": "2026-11-30", "description": "Created on/before (YYYY-MM-DD)." },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Paginated order list with item counts and due amounts."
+          }
+        },
+        {
+          "name": "Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/orders/:order_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "orders", ":order_id", ""],
+              "variable": [
+                { "key": "order_id", "value": "{{order_id}}", "description": "Order UUID (from the list response `id`)." }
+              ]
+            },
+            "description": "Full order: items, timeline events, payments, customer, and money breakdown."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data && body.data.id) {",
+                  "  pm.collectionVariables.set('order_id', body.data.id);",
+                  "  pm.collectionVariables.set('order_number', body.data.order_number);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SHIPPED\",\n  \"note\": \"Handed to Steadfast, consignment SF-88421.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/orders/:order_id/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "orders", ":order_id", ""],
+              "variable": [{ "key": "order_id", "value": "{{order_id}}" }]
+            },
+            "description": "Moves the order to the next lifecycle step and appends a timeline event.\n\nAllowed moves: `PENDING_PAYMENT → CONFIRMED/CANCELLED`, `CONFIRMED → PROCESSING/CANCELLED`, `PROCESSING → SHIPPED/CANCELLED`, `SHIPPED → DELIVERED/CANCELLED`. Cancelling restores reserved stock and flags paid amounts as `REFUNDED`. Illegal jumps return 400."
+          },
+          "response": [
+            {
+              "name": "Update Order Status",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/api/v1/admin/orders/{{order_id}}/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "orders", "{{order_id}}", ""] }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": 200,\n  \"success\": true,\n  \"message\": \"Order status updated successfully.\",\n  \"data\": { \"id\": \"...\", \"order_number\": \"ARS-261103-8FJ2QA\", \"status\": \"SHIPPED\", \"...\": \"...\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Record Offline Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"1835.00\",\n  \"note\": \"Collected remaining half in cash on delivery.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/orders/:order_id/record-payment/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "orders", ":order_id", "record-payment", ""],
+              "variable": [{ "key": "order_id", "value": "{{order_id}}" }]
+            },
+            "description": "Records money collected outside bKash — the due half on delivery, or full cash on delivery. Rejects amounts above the due balance. Updates `paid_amount` / `payment_status` and logs a timeline note."
+          }
+        },
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/payments/?status=COMPLETED&method=BKASH&search=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "payments", ""],
+              "query": [
+                { "key": "status", "value": "COMPLETED", "description": "`INITIATED`, `PENDING`, `COMPLETED`, `FAILED`, `CANCELLED`." },
+                { "key": "method", "value": "BKASH", "description": "`BKASH` or `COD`." },
+                { "key": "search", "value": "", "description": "Order number, bKash payment ID, or trx ID." },
+                { "key": "page", "value": "1", "disabled": true }
+              ]
+            },
+            "description": "Every payment attempt (bKash and recorded offline) across orders."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Store Config",
+      "description": "Singleton store configuration.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Update Store Config",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Choturvuz\",\n  \"tagline\": \"Contemporary Bangladeshi fashion\",\n  \"support_email\": \"help@choturvuz.store\",\n  \"support_phone\": \"+8809611000000\",\n  \"commerce\": {\n    \"currency\": \"BDT\",\n    \"delivery_fee_inside_dhaka\": \"80.00\",\n    \"delivery_fee_outside_dhaka\": \"140.00\",\n    \"allow_half_payment\": true\n  },\n  \"announcement\": {\n    \"notify_banner_enabled\": true,\n    \"notify_banner_text\": \"Eid drop is live — free delivery inside Dhaka!\",\n    \"notify_banner_url\": \"https://choturvuz.store/eid-drop\"\n  },\n  \"return_policy\": \"Returns accepted within 7 days of delivery with tags attached.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/base/update/", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "base", "update", ""] },
+            "description": "Partial update of the singleton config. Accepts flat fields or sectioned objects (`branding`, `legal_document`, `feature`, `announcement`, `commerce`, `seo`); also accepts a multipart `logo` image. Requires superuser."
+          }
+        }
+      ]
+    }
+  ]
+}

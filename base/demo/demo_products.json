@@ -1,0 +1,389 @@
+{
+  "_readme": [
+    "Demo catalog for: python manage.py seed_demo",
+    "collections: matched by slug (derived from name when slug is omitted).",
+    "products: regular stock-tracked products. Give either 'variants' (explicit list) or 'variant_matrix' (sizes x colors, same stock each).",
+    "custom_templates: custom order templates (kind=CUSTOM). No variants; use custom_sizes / custom_colors.",
+    "defaults: merged into every product and template unless the item sets the field itself.",
+    "Sizes: XS, S, M, L, XL, XXL, XXXL, ONE_SIZE. Genders: MEN, WOMEN, UNISEX, KIDS. Status: DRAFT, ACTIVE, ARCHIVED.",
+    "Collection types: CATEGORY, FESTIVE, EDIT. Prices are in BDT.",
+    "Image URLs are placeholders; replace them with your own (e.g. Cloudinary) URLs.",
+    "reviews: store-wide reviews, created APPROVED (staff source). Optional 'product' = product name slug."
+  ],
+
+  "defaults": {
+    "gender": "UNISEX",
+    "status": "ACTIVE"
+  },
+
+  "collections": [
+    {
+      "name": "T-Shirts",
+      "description": "Everyday cotton tees for campus, clubs and events.",
+      "type": "CATEGORY",
+      "position": 1,
+      "image_url": "https://placehold.co/1200x800/1f2a44/ffffff?text=T-Shirts"
+    },
+    {
+      "name": "Jerseys",
+      "description": "Breathable sports jerseys for tournaments and fan days.",
+      "type": "CATEGORY",
+      "position": 2,
+      "image_url": "https://placehold.co/1200x800/0b6e4f/ffffff?text=Jerseys"
+    },
+    {
+      "name": "Hoodies",
+      "description": "Warm fleece hoodies for winter trips and late-night study sessions.",
+      "type": "CATEGORY",
+      "position": 3,
+      "image_url": "https://placehold.co/1200x800/3d2c8d/ffffff?text=Hoodies"
+    },
+    {
+      "name": "Campus Collection",
+      "description": "Department, batch and club wear.",
+      "type": "EDIT",
+      "position": 4,
+      "image_url": "https://placehold.co/1200x800/c0392b/ffffff?text=Campus"
+    },
+    {
+      "name": "Tour Collection",
+      "description": "Matching outfits for study tours, trips and travel groups.",
+      "type": "EDIT",
+      "position": 5,
+      "image_url": "https://placehold.co/1200x800/e67e22/ffffff?text=Tour"
+    }
+  ],
+
+  "products": [
+    {
+      "name": "Classic Crew Neck Tee",
+      "description": "A soft 180 GSM combed-cotton tee with a relaxed fit. Goes with everything.",
+      "highlights": ["100% combed cotton", "180 GSM", "Pre-shrunk"],
+      "fabric": "Cotton",
+      "care_instructions": "Machine wash cold, inside out. Do not bleach.",
+      "base_price": "450.00",
+      "is_featured": true,
+      "collections": ["t-shirts"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/1f2a44/ffffff?text=Crew+Tee", "alt_text": "Classic Crew Neck Tee front"},
+        {"image_url": "https://placehold.co/800x1000/ffffff/1f2a44?text=Crew+Tee+Back", "alt_text": "Classic Crew Neck Tee back"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "TS-CREW",
+        "sizes": ["S", "M", "L", "XL", "XXL"],
+        "colors": [
+          {"name": "Navy", "hex": "#1f2a44"},
+          {"name": "White", "hex": "#ffffff"},
+          {"name": "Black", "hex": "#111111"}
+        ],
+        "stock": 20
+      }
+    },
+    {
+      "name": "Campus Graphic Tee",
+      "description": "Bold front print tee celebrating campus life.",
+      "highlights": ["Screen printed", "Regular fit"],
+      "fabric": "Cotton",
+      "care_instructions": "Wash inside out. Do not iron on print.",
+      "base_price": "550.00",
+      "sale_price": "490.00",
+      "collections": ["t-shirts", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/c0392b/ffffff?text=Campus+Tee", "alt_text": "Campus Graphic Tee"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "TS-CAMP",
+        "sizes": ["M", "L", "XL"],
+        "colors": [
+          {"name": "Maroon", "hex": "#7b1e1e"},
+          {"name": "Ash", "hex": "#b2b5b8"}
+        ],
+        "stock": 15
+      }
+    },
+    {
+      "name": "Tour Squad Tee",
+      "description": "Lightweight tee made for long travel days and group photos.",
+      "highlights": ["Lightweight", "Quick dry"],
+      "fabric": "Cotton-poly blend",
+      "care_instructions": "Machine wash cold.",
+      "base_price": "520.00",
+      "collections": ["t-shirts", "tour-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/e67e22/ffffff?text=Tour+Tee", "alt_text": "Tour Squad Tee"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "TS-TOUR",
+        "sizes": ["S", "M", "L", "XL"],
+        "colors": [
+          {"name": "Orange", "hex": "#e67e22"},
+          {"name": "Sky Blue", "hex": "#5dade2"}
+        ],
+        "stock": 12
+      }
+    },
+    {
+      "name": "Pro Match Jersey",
+      "description": "Sublimated polyester jersey with mesh side panels for full-match comfort.",
+      "highlights": ["Sublimation print", "Mesh side panels", "Moisture wicking"],
+      "fabric": "Polyester mesh",
+      "care_instructions": "Hand wash recommended. Do not tumble dry.",
+      "base_price": "750.00",
+      "is_featured": true,
+      "collections": ["jerseys"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/0b6e4f/ffffff?text=Pro+Jersey", "alt_text": "Pro Match Jersey"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "JR-PRO",
+        "sizes": ["S", "M", "L", "XL", "XXL"],
+        "colors": [
+          {"name": "Green", "hex": "#0b6e4f"},
+          {"name": "Red", "hex": "#c0392b"}
+        ],
+        "stock": 10
+      }
+    },
+    {
+      "name": "Retro Stripe Jersey",
+      "description": "Throwback striped jersey with a ribbed collar.",
+      "highlights": ["Ribbed collar", "Retro fit"],
+      "fabric": "Polyester",
+      "care_instructions": "Machine wash cold.",
+      "base_price": "690.00",
+      "collections": ["jerseys", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/2c3e50/ffffff?text=Retro+Jersey", "alt_text": "Retro Stripe Jersey"}
+      ],
+      "variants": [
+        {"size": "M", "color_name": "Blue / White", "color_hex": "#2c3e50", "sku": "JR-RETRO-BW-M", "stock": 8},
+        {"size": "L", "color_name": "Blue / White", "color_hex": "#2c3e50", "sku": "JR-RETRO-BW-L", "stock": 8},
+        {"size": "XL", "color_name": "Blue / White", "color_hex": "#2c3e50", "sku": "JR-RETRO-BW-XL", "stock": 5, "price": "720.00"}
+      ]
+    },
+    {
+      "name": "Essential Pullover Hoodie",
+      "description": "Brushed-fleece pullover hoodie with a kangaroo pocket.",
+      "highlights": ["320 GSM fleece", "Kangaroo pocket", "Double-lined hood"],
+      "fabric": "Cotton fleece",
+      "care_instructions": "Wash cold, tumble dry low.",
+      "base_price": "1450.00",
+      "is_featured": true,
+      "collections": ["hoodies"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/3d2c8d/ffffff?text=Pullover+Hoodie", "alt_text": "Essential Pullover Hoodie"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "HD-ESS",
+        "sizes": ["M", "L", "XL", "XXL"],
+        "colors": [
+          {"name": "Charcoal", "hex": "#36454f"},
+          {"name": "Purple", "hex": "#3d2c8d"}
+        ],
+        "stock": 10
+      }
+    },
+    {
+      "name": "Zip-Up Travel Hoodie",
+      "description": "Full-zip hoodie with zipped pockets, made for bus rides and cold hill-station nights.",
+      "highlights": ["Full zip", "Zipped pockets"],
+      "fabric": "Cotton-poly fleece",
+      "care_instructions": "Close zip before washing. Wash cold.",
+      "base_price": "1650.00",
+      "sale_price": "1490.00",
+      "collections": ["hoodies", "tour-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/36454f/ffffff?text=Zip+Hoodie", "alt_text": "Zip-Up Travel Hoodie"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "HD-ZIP",
+        "sizes": ["M", "L", "XL"],
+        "colors": [
+          {"name": "Black", "hex": "#111111"},
+          {"name": "Olive", "hex": "#556b2f"}
+        ],
+        "stock": 8
+      }
+    },
+    {
+      "name": "Varsity Hoodie",
+      "description": "Heavyweight varsity hoodie with chenille-style chest lettering.",
+      "highlights": ["Heavyweight", "Embroidered lettering"],
+      "fabric": "Cotton fleece",
+      "care_instructions": "Wash inside out, cold.",
+      "base_price": "1750.00",
+      "collections": ["hoodies", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/7b1e1e/ffffff?text=Varsity+Hoodie", "alt_text": "Varsity Hoodie"}
+      ],
+      "variant_matrix": {
+        "sku_prefix": "HD-VAR",
+        "sizes": ["S", "M", "L", "XL", "XXL", "XXXL"],
+        "colors": [
+          {"name": "Maroon", "hex": "#7b1e1e"}
+        ],
+        "stock": 6
+      }
+    }
+  ],
+
+  "custom_templates": [
+    {
+      "name": "Department Football Jersey",
+      "design_code": "JR-001",
+      "description": "Full-sublimation jersey template. Send your department logo, colours, and the name and number for each player.",
+      "highlights": ["Full sublimation", "Names & numbers included", "Mesh fabric"],
+      "fabric": "Polyester mesh",
+      "base_price": "480.00",
+      "min_order_quantity": 12,
+      "production_days": 7,
+      "is_featured": true,
+      "custom_sizes": ["S", "M", "L", "XL", "XXL", "XXXL"],
+      "custom_colors": [
+        {"name": "Navy", "hex": "#1f2a44"},
+        {"name": "Green", "hex": "#0b6e4f"},
+        {"name": "Red", "hex": "#c0392b"},
+        {"name": "White", "hex": "#ffffff"}
+      ],
+      "size_chart_url": "https://placehold.co/1000x700/ffffff/1f2a44?text=Jersey+Size+Chart",
+      "collections": ["jerseys", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/1f2a44/ffffff?text=JR-001", "alt_text": "Department Football Jersey template"}
+      ]
+    },
+    {
+      "name": "Cricket Team Jersey",
+      "design_code": "JR-002",
+      "description": "Half-sleeve cricket jersey template with a collar. Sponsor logos can go on the chest and sleeves.",
+      "highlights": ["Collar", "Sponsor logo placement"],
+      "fabric": "Polyester",
+      "base_price": "520.00",
+      "min_order_quantity": 11,
+      "production_days": 8,
+      "custom_sizes": ["S", "M", "L", "XL", "XXL"],
+      "custom_colors": [
+        {"name": "Sky Blue", "hex": "#5dade2"},
+        {"name": "Yellow", "hex": "#f1c40f"},
+        {"name": "Black", "hex": "#111111"}
+      ],
+      "size_chart_url": "https://placehold.co/1000x700/ffffff/1f2a44?text=Jersey+Size+Chart",
+      "collections": ["jerseys"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/5dade2/ffffff?text=JR-002", "alt_text": "Cricket Team Jersey template"}
+      ]
+    },
+    {
+      "name": "Batch Day Tee",
+      "design_code": "TS-001",
+      "description": "Cotton tee for rag day, batch day or club events. Front logo plus a batch name on the back.",
+      "highlights": ["Screen or DTF print", "Front + back print"],
+      "fabric": "Cotton",
+      "base_price": "380.00",
+      "min_order_quantity": 20,
+      "production_days": 5,
+      "is_featured": true,
+      "custom_sizes": ["S", "M", "L", "XL", "XXL"],
+      "custom_colors": [
+        {"name": "White", "hex": "#ffffff"},
+        {"name": "Black", "hex": "#111111"},
+        {"name": "Maroon", "hex": "#7b1e1e"},
+        {"name": "Ash", "hex": "#b2b5b8"}
+      ],
+      "size_chart_url": "https://placehold.co/1000x700/ffffff/1f2a44?text=Tee+Size+Chart",
+      "collections": ["t-shirts", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/7b1e1e/ffffff?text=TS-001", "alt_text": "Batch Day Tee template"}
+      ]
+    },
+    {
+      "name": "Study Tour Group Tee",
+      "design_code": "TS-002",
+      "description": "Matching tees for study tours and trips: your tour name, destination and date on the back.",
+      "highlights": ["Matching group look", "Quick turnaround"],
+      "fabric": "Cotton-poly blend",
+      "base_price": "360.00",
+      "min_order_quantity": 15,
+      "production_days": 4,
+      "custom_sizes": ["S", "M", "L", "XL", "XXL"],
+      "custom_colors": [],
+      "collections": ["t-shirts", "tour-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/e67e22/ffffff?text=TS-002", "alt_text": "Study Tour Group Tee template"}
+      ]
+    },
+    {
+      "name": "Club Pullover Hoodie",
+      "design_code": "HD-001",
+      "description": "Fleece pullover hoodie with an embroidered or printed club logo on the chest.",
+      "highlights": ["Embroidery available", "320 GSM fleece"],
+      "fabric": "Cotton fleece",
+      "base_price": "1250.00",
+      "min_order_quantity": 10,
+      "production_days": 10,
+      "custom_sizes": ["S", "M", "L", "XL", "XXL", "XXXL"],
+      "custom_colors": [
+        {"name": "Black", "hex": "#111111"},
+        {"name": "Navy", "hex": "#1f2a44"},
+        {"name": "Charcoal", "hex": "#36454f"}
+      ],
+      "size_chart_url": "https://placehold.co/1000x700/ffffff/1f2a44?text=Hoodie+Size+Chart",
+      "collections": ["hoodies", "campus-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/36454f/ffffff?text=HD-001", "alt_text": "Club Pullover Hoodie template"}
+      ]
+    },
+    {
+      "name": "Winter Tour Zip Hoodie",
+      "design_code": "HD-002",
+      "description": "Zip hoodie for winter tours: tour logo on the chest, group name on the back.",
+      "highlights": ["Full zip", "Back print"],
+      "fabric": "Cotton-poly fleece",
+      "base_price": "1390.00",
+      "min_order_quantity": 10,
+      "production_days": 10,
+      "custom_sizes": ["M", "L", "XL", "XXL"],
+      "custom_colors": [
+        {"name": "Olive", "hex": "#556b2f"},
+        {"name": "Black", "hex": "#111111"}
+      ],
+      "collections": ["hoodies", "tour-collection"],
+      "images": [
+        {"image_url": "https://placehold.co/800x1000/556b2f/ffffff?text=HD-002", "alt_text": "Winter Tour Zip Hoodie template"}
+      ]
+    }
+  ],
+
+  "reviews": [
+    {
+      "customer_name": "Tanvir Hasan",
+      "customer_title": "CSE '26, University of Dhaka",
+      "rating": 5,
+      "title": "Perfect batch jerseys",
+      "comment": "Ordered 40 jerseys for our inter-department tournament. Names and numbers were spot on and delivery was before the deadline.",
+      "is_featured": true
+    },
+    {
+      "customer_name": "Nusrat Jahan",
+      "customer_title": "Sajek study tour group",
+      "rating": 5,
+      "title": "Everyone loved the tour tees",
+      "comment": "The team helped us fix our logo file and sent a mockup first. The print quality held up after many washes.",
+      "is_featured": true
+    },
+    {
+      "customer_name": "Arif Rahman",
+      "customer_title": "Photography Club, BUET",
+      "rating": 4,
+      "title": "Warm and comfy hoodies",
+      "comment": "Great fleece quality and the embroidery looks premium. One size ran a bit large, so check the size chart.",
+      "product": "club-pullover-hoodie"
+    },
+    {
+      "customer_name": "Mitu Akter",
+      "customer_title": "Dhaka",
+      "rating": 5,
+      "comment": "Bought the classic tee in three colours. Soft fabric and fast delivery inside Dhaka.",
+      "product": "classic-crew-neck-tee"
+    }
+  ]
+}
